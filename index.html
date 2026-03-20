@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>神秘塔罗 - 每日占卜 v1.0.4</title>
+    <title>神秘塔罗 - 每日占卜 v1.0.5</title>
     <meta name="version" content="1.0.2">
     <style>
         :root {
@@ -316,21 +316,29 @@ let isReversed = false;
 
 // 保存记录到本地存储
 function saveRecord(nickname, topic, cardName, orientation, wish) {
-    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
-    records.unshift({
+    const record = {
         nickname,
         topic,
         cardName,
         orientation,
         wish,
-        time: new Date().toLocaleString('zh-CN')
-    });
-    localStorage.setItem('tarot_records', JSON.stringify(records));
+        time: new Date().toLocaleString('zh-CN'),
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
     
-    // 更新计数
-    const count = parseInt(localStorage.getItem('tarot_count') || '0');
-    localStorage.setItem('tarot_count', count + 1);
+    // 保存到 Firebase
+    database.ref('records').push(record).then(() => {
+        console.log('已保存到云端');
+    }).catch(err => {
+        console.error('保存失败:', err);
+    });
+    
+    // 同时保存到 localStorage（备用）
+    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
+    records.unshift(record);
+    localStorage.setItem('tarot_records', JSON.stringify(records));
 }
+
 
 function showSection(name) {
     ['name', 'topic', 'draw', 'result', 'blessing'].forEach(s => {
