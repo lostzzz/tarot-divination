@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>神秘塔罗 - 每日占卜 v1.0.2</title>
+    <title>神秘塔罗 - 每日占卜 v1.0.3-Firebase</title>
     <meta name="version" content="1.0.2">
     <style>
         :root {
@@ -180,6 +180,22 @@
             font-size: 0.7rem; color: var(--color-text-muted); opacity: 0.3;
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHmZ5-322j46o77fd46cWfuiRu8gsKonc",
+            authDomain: "test001-f643a.firebaseapp.com",
+            databaseURL: "https://test001-f643a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "test001-f643a",
+            storageBucket: "test001-f643a.firebasestorage.app",
+            messagingSenderId: "230236318931",
+            appId: "1:230236318931:web:56782ff20c1589c09d7826"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -299,116 +315,29 @@ let currentCard = null;
 let isReversed = false;
 
 // 保存记录到本地存储
+// 保存记录
 function saveRecord(nickname, topic, cardName, orientation, wish) {
-    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
-    records.unshift({
+    const record = {
         nickname,
         topic,
         cardName,
         orientation,
         wish,
-        time: new Date().toLocaleString('zh-CN')
+        time: new Date().toLocaleString('zh-CN'),
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    // 保存到 Firebase
+    database.ref('records').push(record).then(() => {
+        console.log('已保存到云端');
+    }).catch(err => {
+        console.error('保存失败:', err);
     });
+    
+    // 同时保存到 localStorage（备用）
+    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
+    records.unshift(record);
     localStorage.setItem('tarot_records', JSON.stringify(records));
-    
-    // 更新计数
-    const count = parseInt(localStorage.getItem('tarot_count') || '0');
-    localStorage.setItem('tarot_count', count + 1);
-}
-
-function showSection(name) {
-    ['name', 'topic', 'draw', 'result', 'blessing'].forEach(s => {
-        document.getElementById(s + '-section').classList.toggle('active', s === name);
-    });
-}
-
-// 昵称输入
-const nicknameInput = document.getElementById('nickname-input');
-const startBtn = document.getElementById('start-btn');
-
-nicknameInput.addEventListener('input', () => {
-    startBtn.disabled = nicknameInput.value.trim() === '';
-});
-
-startBtn.addEventListener('click', () => {
-    currentNickname = nicknameInput.value.trim();
-    document.getElementById('display-name').textContent = currentNickname;
-    showSection('topic');
-});
-
-// 主题选择
-document.querySelectorAll('.topic-card').forEach(card => {
-    card.addEventListener('click', () => {
-        selectedTopic = card.dataset.topic;
-        showSection('draw');
-    });
-});
-
-// 抽牌
-document.getElementById('draw-card').addEventListener('click', () => {
-    currentCard = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
-    isReversed = Math.random() > 0.5;
-    
-    const img = document.getElementById('tarot-image');
-    const loading = document.getElementById('card-loading');
-    
-    // 显示加载状态
-    img.style.display = 'none';
-    loading.style.display = 'flex';
-    loading.textContent = '加载中...';
-    
-    img.onload = function() {
-        img.style.display = 'block';
-        loading.style.display = 'none';
-    };
-    
-    img.onerror = function() {
-        loading.textContent = '使用备用图片';
-        this.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="320" viewBox="0 0 200 320"><rect fill="#1a1a24" width="200" height="320"/><rect x="10" y="10" width="180" height="300" fill="none" stroke="#c9a227" stroke-width="2"/><text x="100" y="140" fill="#c9a227" font-size="60" text-anchor="middle">☽</text><text x="100" y="200" fill="#c9a227" font-size="24" text-anchor="middle">' + currentCard.name + '</text></svg>');
-        this.onload = function() {
-            img.style.display = 'block';
-            loading.style.display = 'none';
-        };
-    };
-    
-    img.src = currentCard.image;
-    img.style.transform = isReversed ? 'rotate(180deg)' : 'none';
-    
-    document.getElementById('card-name').textContent = currentCard.name;
-    const orientEl = document.getElementById('card-orientation');
-    orientEl.textContent = isReversed ? '逆位' : '正位';
-    orientEl.className = 'card-orientation' + (isReversed ? ' reversed' : '');
-    
-    document.getElementById('keywords').innerHTML = currentCard.keywords.map(k => `<span>${k}</span>`).join('');
-    
-    const meaning = currentCard.meanings[selectedTopic];
-    document.getElementById('meaning').textContent = isReversed ? meaning.reversed : meaning.upright;
-    document.getElementById('guidance').textContent = isReversed ? currentCard.reversedGuidance : currentCard.uprightGuidance;
-    
-    showSection('result');
-});
-
-// 许愿
-document.getElementById('wish-btn').addEventListener('click', () => {
-    const wish = document.getElementById('wish-input').value.trim() || '愿世界和平';
-    
-    // 保存记录
-    saveRecord(currentNickname, selectedTopic, currentCard.name, isReversed ? '逆位' : '正位', wish);
-    
-    // 显示祝福
-    document.getElementById('wish-display').textContent = wish;
-    const blessing = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
-    document.getElementById('blessing-text').textContent = blessing;
-    
-    showSection('blessing');
-});
-
-// 返回首页
-document.getElementById('home-btn').addEventListener('click', () => {
-    nicknameInput.value = '';
-    startBtn.disabled = true;
-    document.getElementById('wish-input').value = '';
-    showSection('name');
 });
 
 showSection('name');
