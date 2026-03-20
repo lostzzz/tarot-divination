@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔罗占卜 - 后台管理</title>
+    <style>
+        :root {
+            --color-bg: #0a0a0f;
+            --color-gold: #c9a227;
+            --color-gold-light: #e8c547;
+            --color-gold-dark: #8b6914;
+            --color-text: #e8e0d5;
+            --color-text-muted: #9a9187;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', 'Songti SC', serif;
+            background: linear-gradient(180deg, #0a0a0f 0%, #1a1025 50%, #0a0a0f 100%);
+            color: var(--color-text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--color-gold-dark);
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: var(--color-gold);
+            margin-bottom: 10px;
+        }
+        
+        /* 登录 */
+        .login-box {
+            background: rgba(26, 26, 36, 0.9);
+            border: 1px solid var(--color-gold-dark);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        .login-box h2 { color: var(--color-gold); margin-bottom: 20px; }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--color-gold-dark);
+            border-radius: 8px;
+            color: var(--color-text);
+            font-family: inherit;
+        }
+        .input-group input:focus { outline: none; border-color: var(--color-gold); }
+        .btn {
+            background: linear-gradient(145deg, var(--color-gold-dark) 0%, var(--color-gold) 100%);
+            color: #0a0a0f; border: none; padding: 12px 30px;
+            border-radius: 25px; font-size: 1rem; cursor: pointer;
+            font-family: inherit; font-weight: bold;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .error { color: #e74c3c; margin-top: 10px; font-size: 0.9rem; }
+        
+        /* 统计 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(26, 26, 36, 0.9);
+            border: 1px solid var(--color-gold-dark);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            color: var(--color-gold);
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+            margin-top: 5px;
+        }
+        
+        /* 记录列表 */
+        .records-section {
+            background: rgba(26, 26, 36, 0.9);
+            border: 1px solid var(--color-gold-dark);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .records-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--color-gold-dark);
+        }
+        .records-header h2 { color: var(--color-gold); font-size: 1.2rem; }
+        .clear-btn {
+            background: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        .record-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--color-gold);
+        }
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .record-nickname {
+            font-size: 1.1rem;
+            color: var(--color-gold-light);
+            font-weight: bold;
+        }
+        .record-time {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+        .record-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .record-detail {
+            font-size: 0.9rem;
+        }
+        .record-detail span {
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+        }
+        .record-wish {
+            background: rgba(201, 162, 39, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--color-gold-light);
+        }
+        .record-wish-label {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-muted);
+        }
+        
+        .hidden { display: none !important; }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--color-gold);
+            text-decoration: none;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHmZ5-322j46o77fd46cWfuiRu8gsKonc",
+            authDomain: "test001-f643a.firebaseapp.com",
+            databaseURL: "https://test001-f643a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "test001-f643a",
+            storageBucket: "test001-f643a.firebasestorage.app",
+            messagingSenderId: "230236318931",
+            appId: "1:230236318931:web:56782ff20c1589c09d7826"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHmZ5-322j46o77fd46cWfuiRu8gsKonc",
+            authDomain: "test001-f643a.firebaseapp.com",
+            databaseURL: "https://test001-f643a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "test001-f643a",
+            storageBucket: "test001-f643a.firebasestorage.app",
+            messagingSenderId: "230236318931",
+            appId: "1:230236318931:web:56782ff20c1589c09d7826"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔮 塔罗占卜后台管理</h1>
+            <p style="color: var(--color-text-muted);">查看占卜记录与统计</p>
+        </header>
+        
+        <!-- 登录 -->
+        <div id="login-section" class="login-box">
+            <h2>管理员登录</h2>
+            <div class="input-group">
+                <input type="password" id="password-input" placeholder="请输入密码">
+            </div>
+            <button class="btn" onclick="login()">登录</button>
+            <p id="error-msg" class="error hidden">密码错误</p>
+            <a href="index.html" class="back-link">← 返回占卜页面</a>
+        </div>
+        
+        <!-- 管理面板 -->
+        <div id="admin-section" class="hidden">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-count">0</div>
+                    <div class="stat-label">总占卜次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="today-count">0</div>
+                    <div class="stat-label">今日占卜</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="unique-users">0</div>
+                    <div class="stat-label">独立用户</div>
+                </div>
+            </div>
+            
+            <div class="records-section">
+                <div class="records-header">
+                    <h2>📜 占卜记录</h2>
+                    <button class="clear-btn" onclick="clearRecords()">清空记录</button>
+                </div>
+                <div id="records-list"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="index.html" class="back-link">← 返回占卜页面</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 后台密码
+        const ADMIN_PASSWORD = 'lost2000';
+        
+        function login() {
+            const password = document.getElementById('password-input').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('admin-section').classList.remove('hidden');
+                loadData();
+            } else {
+                document.getElementById('error-msg').classList.remove('hidden');
+            }
+        }
+        
+        function loadData() {
+    // 从 Firebase 读取数据
+    database.ref('records').orderByChild('timestamp').limitToLast(100).once('value').then(snapshot => {
+        const records = [];
+        snapshot.forEach(child => {
+            records.unshift(child.val());
+        });
+        
+        // 统计
+        document.getElementById('total-count').textContent = records.length;
+        
+        // 今日统计
+        const today = new Date().toLocaleDateString('zh-CN');
+        const todayRecords = records.filter(r => r.time && r.time.includes(today));
+        document.getElementById('today-count').textContent = todayRecords.length;
+        
+        // 独立用户
+        const nicknames = new Set(records.map(r => r.nickname));
+        document.getElementById('unique-users').textContent = nicknames.size;
+        
+        // 显示记录
+        const listEl = document.getElementById('records-list');
+        if (records.length === 0) {
+            listEl.innerHTML = '<div class="empty-state">暂无占卜记录</div>';
+            return;
+        }
+        
+        listEl.innerHTML = records.map(record => \`
+            <div class="record-item">
+                <div class="record-header">
+                    <span class="record-nickname">\${escapeHtml(record.nickname)}</span>
+                    <span class="record-time">\${record.time || '未知'}</span>
+                </div>
+                <div class="record-details">
+                    <div class="record-detail">
+                        <span>主题</span><br>
+                        \${getTopicName(record.topic)}
+                    </div>
+                    <div class="record-detail">
+                        <span>卡牌</span><br>
+                        \${escapeHtml(record.cardName)} (\${record.orientation || '正位'})
+                    </div>
+                    <div class="record-detail" style="width:100%">
+                        <span>愿望</span><br>
+                        \${escapeHtml(record.wish || '无')}
+                    </div>
+                </div>
+            </div>
+        \`).join('');
+    }).catch(err => {
+        console.error('加载失败:', err);
+        // 备用：从 localStorage 加载
+        loadLocalData();
+    });
+}
+
+function loadLocalData() {
+    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
+    document.getElementById('total-count').textContent = localStorage.getItem('tarot_count') || records.length;
+    const today = new Date().toLocaleDateString('zh-CN');
+    const todayRecords = records.filter(r => r.time && r.time.includes(today));
+    document.getElementById('today-count').textContent = todayRecords.length;
+    const nicknames = new Set(records.map(r => r.nickname));
+    document.getElementById('unique-users').textContent = nicknames.size;
+    
+    const listEl = document.getElementById('records-list');
+    if (records.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">暂无占卜记录</div>';
+        return;
+    }
+    listEl.innerHTML = records.map(record => \`
+        <div class="record-item">
+            <div class="record-header">
+                <span class="record-nickname">\${escapeHtml(record.nickname)}</span>
+                <span class="record-time">\${record.time}</span>
+            </div>
+            <div class="record-details">
+                <div class="record-detail">
+                    <span>主题</span><br>
+                    \${getTopicName(record.topic)}
+                </div>
+                <div class="record-detail">
+                    <span>卡牌</span><br>
+                    \${escapeHtml(record.cardName)} (\${record.orientation || '正位'})
+                </div>
+                <div class="record-detail" style="width:100%">
+                    <span>愿望</span><br>
+                    \${escapeHtml(record.wish || '无')}
+                </div>
+            </div>
+        </div>
+    \`).join('');
+}
+
+function getTopicName(topic) {
+            const names = { love: '💕 爱情', career: '💼 事业', wealth: '💰 财富' };
+            return names[topic] || topic;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function clearRecords() {
+            if (confirm('确定要清空所有记录吗？此操作不可恢复。')) {
+                localStorage.removeItem('tarot_records');
+                localStorage.removeItem('tarot_count');
+                loadData();
+            }
+        }
+        
+        // 回车登录
+        document.getElementById('password-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>

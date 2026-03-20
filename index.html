@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>神秘塔罗 - 每日占卜 v1.0.5</title>
+    <meta name="version" content="1.0.2">
+    <style>
+        :root {
+            --color-bg: #0a0a0f;
+            --color-gold: #c9a227;
+            --color-gold-light: #e8c547;
+            --color-gold-dark: #8b6914;
+            --color-text: #e8e0d5;
+            --color-text-muted: #9a9187;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', 'Songti SC', serif;
+            background: linear-gradient(180deg, #0a0a0f 0%, #1a1025 50%, #0a0a0f 100%);
+            color: var(--color-text);
+            min-height: 100vh;
+        }
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        header { text-align: center; padding: 30px 0 20px; }
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-gold);
+            text-shadow: 0 0 30px rgba(201, 162, 39, 0.5);
+            letter-spacing: 0.2em;
+            margin-bottom: 8px;
+        }
+        .subtitle { font-size: 0.9rem; color: var(--color-text-muted); letter-spacing: 0.3em; }
+        
+        main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px 0; }
+        .section { display: none; animation: fadeIn 0.6s ease-out; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 输入昵称 */
+        .input-group { margin-bottom: 20px; }
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            background: rgba(26, 26, 36, 0.8);
+            border: 2px solid var(--color-gold-dark);
+            border-radius: 12px;
+            color: var(--color-text);
+            text-align: center;
+            font-family: inherit;
+        }
+        .input-group input:focus { outline: none; border-color: var(--color-gold); }
+        .input-group input::placeholder { color: var(--color-text-muted); }
+        
+        .btn {
+            background: linear-gradient(145deg, var(--color-gold-dark) 0%, var(--color-gold) 100%);
+            color: #0a0a0f; border: none; padding: 15px 40px;
+            border-radius: 30px; font-size: 1rem; cursor: pointer;
+            display: block; margin: 0 auto; transition: all 0.3s;
+            font-family: inherit; font-weight: bold;
+        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .hint { text-align: center; font-size: 0.85rem; color: var(--color-text-muted); margin-top: 10px; }
+        
+        /* 主题选择 */
+        .welcome-text { text-align: center; font-size: 1.1rem; margin-bottom: 20px; }
+        .welcome-text span { color: var(--color-gold); }
+        
+        .topic-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .topic-card {
+            background: rgba(26, 26, 36, 0.8);
+            border: 1px solid rgba(201, 162, 39, 0.2);
+            border-radius: 12px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .topic-card:hover { border-color: var(--color-gold); transform: translateY(-5px); }
+        .topic-icon { font-size: 2rem; margin-bottom: 8px; }
+        .topic-name { font-size: 0.9rem; color: var(--color-text); }
+        
+        /* 抽牌 */
+        .card-back-container { display: flex; justify-content: center; margin-bottom: 30px; }
+        .card-back {
+            width: 180px; height: 280px;
+            background: linear-gradient(145deg, #1a1a24 0%, #12121a 50%, #1a1a24 100%);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--color-gold-dark);
+            transition: all 0.4s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-back:hover { transform: scale(1.05); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(201, 162, 39, 0.3); }
+        .mystic-symbol { font-size: 3rem; color: var(--color-gold); text-shadow: 0 0 20px rgba(201, 162, 39, 0.5); }
+        
+        .instruction { text-align: center; font-size: 1.1rem; color: var(--color-text); margin-bottom: 10px; }
+        
+        /* 结果 */
+        .result-card { text-align: center; margin-bottom: 30px; }
+        .card-image-container {
+            width: 200px; height: 320px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(201, 162, 39, 0.2);
+            border: 3px solid var(--color-gold);
+            background: #fff;
+        }
+        .card-image-container img { width: 100%; height: 100%; object-fit: cover; }
+        .card-name { font-size: 1.6rem; color: var(--color-gold-light); margin-bottom: 8px; }
+        .card-orientation {
+            font-size: 0.9rem; color: var(--color-text-muted);
+            padding: 4px 16px; display: inline-block;
+            border: 1px solid var(--color-gold-dark); border-radius: 20px;
+        }
+        .card-orientation.reversed { color: #a855f7; border-color: #a855f7; }
+        
+        .reading-container {
+            background: linear-gradient(145deg, rgba(26, 26, 36, 0.9) 0%, rgba(18, 18, 26, 0.95) 100%);
+            border: 1px solid rgba(201, 162, 39, 0.2); border-radius: 16px;
+            padding: 24px; margin-bottom: 20px;
+        }
+        .reading-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(201, 162, 39, 0.1); }
+        .reading-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .reading-section h3 { font-size: 1rem; color: var(--color-gold); margin-bottom: 10px; letter-spacing: 0.15em; }
+        .reading-section p { font-size: 0.95rem; line-height: 1.8; color: var(--color-text); }
+        .keywords { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .keywords span {
+            background: rgba(201, 162, 39, 0.15); color: var(--color-gold-light);
+            padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;
+            border: 1px solid rgba(201, 162, 39, 0.3);
+        }
+        
+        .wish-section { margin-top: 20px; }
+        .wish-section textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            font-size: 1rem;
+            background: rgba(26, 26, 36, 0.8);
+            border: 2px solid var(--color-gold-dark);
+            border-radius: 12px;
+            color: var(--color-text);
+            font-family: inherit;
+            resize: none;
+        }
+        .wish-section textarea:focus { outline: none; border-color: var(--color-gold); }
+        
+        /* 祝福页 */
+        .blessing { text-align: center; padding: 20px; }
+        .blessing-icon { font-size: 4rem; margin-bottom: 20px; }
+        .blessing-title { font-size: 1.8rem; color: var(--color-gold); margin-bottom: 20px; }
+        .blessing-text { font-size: 1.1rem; line-height: 1.8; color: var(--color-text); margin-bottom: 30px; }
+        .user-wish { 
+            background: rgba(201, 162, 39, 0.1); 
+            border: 1px solid var(--color-gold-dark);
+            padding: 15px; border-radius: 12px; margin-bottom: 30px;
+        }
+        .user-wish-label { font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 5px; }
+        .user-wish-text { font-size: 1rem; color: var(--color-gold-light); }
+        
+        footer { text-align: center; padding: 20px; color: var(--color-text-muted); font-size: 0.75rem; opacity: 0.6; }
+        
+        .admin-link { 
+            position: fixed; bottom: 10px; right: 10px; 
+            font-size: 0.7rem; color: var(--color-text-muted); opacity: 0.3;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHmZ5-322j46o77fd46cWfuiRu8gsKonc",
+            authDomain: "test001-f643a.firebaseapp.com",
+            databaseURL: "https://test001-f643a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "test001-f643a",
+            storageBucket: "test001-f643a.firebasestorage.app",
+            messagingSenderId: "230236318931",
+            appId: "1:230236318931:web:56782ff20c1589c09d7826"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="title">✧ 神秘塔罗 ✧</h1>
+            <p class="subtitle">探寻命运的指引</p>
+        </header>
+        
+        <main>
+            <!-- 昵称输入 -->
+            <div id="name-section" class="section active">
+                <p class="instruction" style="margin-bottom: 20px;">请输入你的昵称</p>
+                <div class="input-group">
+                    <input type="text" id="nickname-input" placeholder="输入昵称" maxlength="20">
+                </div>
+                <button class="btn" id="start-btn" disabled>开始占卜</button>
+            </div>
+            
+            <!-- 主题选择 -->
+            <div id="topic-section" class="section">
+                <p class="welcome-text">欢迎 <span id="display-name"></span>，选择你想占卜的领域</p>
+                <div class="topic-grid">
+                    <div class="topic-card" data-topic="love"><div class="topic-icon">💕</div><div class="topic-name">爱情</div></div>
+                    <div class="topic-card" data-topic="career"><div class="topic-icon">💼</div><div class="topic-name">事业</div></div>
+                    <div class="topic-card" data-topic="wealth"><div class="topic-icon">💰</div><div class="topic-name">财富</div></div>
+                </div>
+            </div>
+            
+            <!-- 抽牌 -->
+            <div id="draw-section" class="section">
+                <div class="card-back-container">
+                    <div class="card-back" id="draw-card"><span class="mystic-symbol">☽</span></div>
+                </div>
+                <p class="instruction">点击卡牌，揭示今日命运</p>
+            </div>
+            
+            <!-- 结果 -->
+            <div id="result-section" class="section">
+                <div class="result-card">
+                    <div class="card-image-container">
+                        <img id="tarot-image" src="" alt="塔罗牌" style="display: none;">
+                        <div id="card-loading" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-gold); font-size: 1.2rem;">加载中...</div>
+                    </div>
+                    <h2 class="card-name" id="card-name"></h2>
+                    <div class="card-orientation" id="card-orientation"></div>
+                </div>
+                <div class="reading-container">
+                    <div class="reading-section"><h3>✦ 关键词</h3><p class="keywords" id="keywords"></p></div>
+                    <div class="reading-section"><h3>✦ 释义</h3><p class="meaning" id="meaning"></p></div>
+                    <div class="reading-section"><h3>✦ 指引</h3><p class="guidance" id="guidance"></p></div>
+                </div>
+                <div class="wish-section">
+                    <p class="instruction">许下你的愿望吧</p>
+                    <textarea id="wish-input" placeholder="在这里输入你的愿望..." maxlength="100"></textarea>
+                </div>
+                <button class="btn" id="wish-btn">我要许愿</button>
+            </div>
+            
+            <!-- 祝福页 -->
+            <div id="blessing-section" class="section">
+                <div class="blessing">
+                    <div class="blessing-icon">✨</div>
+                    <h2 class="blessing-title">🙏 祝福你 🙏</h2>
+                    <div class="user-wish">
+                        <div class="user-wish-label">你的愿望</div>
+                        <div class="user-wish-text" id="wish-display"></div>
+                    </div>
+                    <p class="blessing-text" id="blessing-text"></p>
+                    <button class="btn" id="home-btn">返回首页</button>
+                </div>
+            </div>
+        </main>
+        
+        <footer><p>塔罗仅供娱乐参考，命运掌握在自己手中</p></footer>
+        
+        <a href="admin.html" class="admin-link">管理</a>
+    </div>
+
+    <script>
+const TAROT_CARDS = [
+    {id:0,name:"愚者",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_00.jpg",keywords:["新开始","冒险","纯真","自由"],meanings:{love:{upright:"感情即将迎来新的开始。单身者可能遇到意想不到的人。",reversed:"感情中可能过于鲁莽或逃避承诺。"},career:{upright:"事业上新的机会即将出现。勇敢尝试新领域。",reversed:"工作中可能缺乏计划性，过于冲动。"},wealth:{upright:"财务上可能有新的投资机会。",reversed:"理财上要避免冲动消费。"} },uprightGuidance:"今天是开启新计划的好时机！",reversedGuidance:"今天需要更加谨慎。" },
+    {id:1,name:"魔术师",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_01.jpg",keywords:["创造力","意志力","技能","自信"],meanings:{love:{upright:"你拥有吸引理想伴侣的所有条件。",reversed:"感情中可能存在欺骗或隐瞒。"},career:{upright:"事业运势极佳！你的才能将得到充分发挥。",reversed:"工作中可能感到力不从心。"},wealth:{upright:"财运亨通！",reversed:"财务上可能错失良机。"} },uprightGuidance:"今天是展现才能的日子！",reversedGuidance:"今天可能感到缺乏动力。" },
+    {id:2,name:"女祭司",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_02.jpg",keywords:["直觉","神秘","内在智慧"],meanings:{love:{upright:"感情需要更多倾听内心的声音。",reversed:"感情中可能忽视直觉或隐藏真实感受。"},career:{upright:"事业上相信直觉会带来好结果。",reversed:"工作中可能信息不足。"},wealth:{upright:"财务上直觉会指引你。",reversed:"理财上不要被表象迷惑。"} },uprightGuidance:"今天要相信你的直觉。",reversedGuidance:"今天不要忽视内心的感受。" },
+    {id:3,name:"女皇",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_03.jpg",keywords:["丰饶","母性","创造","自然"],meanings:{love:{upright:"感情充满温暖和滋养。",reversed:"感情中可能缺乏安全感。"},career:{upright:"事业蓬勃发展，创意项目将结出硕果。",reversed:"工作中可能遇到瓶颈。"},wealth:{upright:"财运极佳！",reversed:"财务上可能过度消费。"} },uprightGuidance:"今天是滋养自己和所爱之人的好日子。",reversedGuidance:"今天需要更多自我关爱。" },
+    {id:4,name:"皇帝",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_04.jpg",keywords:["权威","结构","控制"],meanings:{love:{upright:"感情需要稳定和承诺。",reversed:"感情中可能控制欲过强。"},career:{upright:"事业上展现领导力的时候到了。",reversed:"工作中可能过于专制。"},wealth:{upright:"财务上稳健管理将带来长期收益。",reversed:"理财上可能缺乏纪律。"} },uprightGuidance:"今天是建立秩序的好时机。",reversedGuidance:"今天要反思使用权力的方式。" },
+    {id:5,name:"教皇",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_05.jpg",keywords:["传统","信仰","教育"],meanings:{love:{upright:"感情适合遵循传统价值观。",reversed:"感情中可能因传统观念产生冲突。"},career:{upright:"事业上遵循既定规则会带来稳定。",reversed:"工作中可能感到束缚。"},wealth:{upright:"财务上稳健的传统投资方式更适合你。",reversed:"理财上可能想要打破常规。"} },uprightGuidance:"今天适合学习和寻求指导。",reversedGuidance:"今天鼓励你打破常规。" },
+    {id:6,name:"恋人",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_06.jpg",keywords:["爱情","选择","和谐"],meanings:{love:{upright:"爱情运势极佳！",reversed:"感情中可能面临艰难选择。"},career:{upright:"事业上可能面临重要选择。",reversed:"工作中可能因选择错误而后悔。"},wealth:{upright:"财务上可能需要在不同投资间做选择。",reversed:"理财决策可能受到情感影响。"} },uprightGuidance:"今天拥抱爱情和和谐。",reversedGuidance:"今天要诚实地面对问题。" },
+    {id:7,name:"战车",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_07.jpg",keywords:["意志","胜利","决心"],meanings:{love:{upright:"感情需要主动争取。",reversed:"感情中可能缺乏方向。"},career:{upright:"事业运势强劲！",reversed:"工作中可能遇到阻碍。"},wealth:{upright:"财运上升！",reversed:"理财上可能冲动。"} },uprightGuidance:"今天是克服障碍的好日子！",reversedGuidance:"今天可能感到缺乏动力。" },
+    {id:8,name:"力量",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_08.jpg",keywords:["勇气","耐心","内在力量"],meanings:{love:{upright:"感情需要耐心和温柔。",reversed:"感情中可能自我怀疑。"},career:{upright:"事业上以柔克刚会带来好结果。",reversed:"工作中可能感到软弱。"},wealth:{upright:"财务上耐心和坚持会带来回报。",reversed:"理财上可能因恐惧而错失机会。"} },uprightGuidance:"今天相信自己的内在力量。",reversedGuidance:"今天需要建立自信。" },
+    {id:9,name:"隐士",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_09.jpg",keywords:["独处","内省","智慧"],meanings:{love:{upright:"感情需要独处思考的时间。",reversed:"感情中可能过度孤立。"},career:{upright:"事业上需要沉淀和反思。",reversed:"工作中可能感到孤独。"},wealth:{upright:"财务上需要冷静分析。",reversed:"理财上可能因孤立而错过信息。"} },uprightGuidance:"今天是向内探索的好时机。",reversedGuidance:"今天不要过度封闭自己。" },
+    {id:10,name:"命运之轮",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_10.jpg",keywords:["命运","转变","机遇"],meanings:{love:{upright:"感情运势正在好转！",reversed:"感情可能经历低谷期。"},career:{upright:"事业迎来转折点！",reversed:"工作中可能遇到挫折。"},wealth:{upright:"财运正在上升！",reversed:"财务上可能暂时不顺。"} },uprightGuidance:"今天拥抱变化！",reversedGuidance:"今天保持耐心。" },
+    {id:11,name:"正义",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_11.jpg",keywords:["公正","真相","平衡"],meanings:{love:{upright:"感情将得到公正的结果。",reversed:"感情中可能存在不公正。"},career:{upright:"事业上公正会得到回报。",reversed:"工作中可能遇到不公平。"},wealth:{upright:"财务上公正的交易会带来收益。",reversed:"理财上可能有不诚实行为。"} },uprightGuidance:"今天是追求公正的好日子。",reversedGuidance:"今天审视自己的行为。" },
+    {id:12,name:"倒吊人",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_12.jpg",keywords:["牺牲","等待","新视角"],meanings:{love:{upright:"感情需要换个角度看问题。",reversed:"感情中可能无谓地坚持。"},career:{upright:"事业上需要暂停和反思。",reversed:"工作中可能无谓地挣扎。"},wealth:{upright:"财务上需要耐心等待。",reversed:"理财上可能因急躁而犯错。"} },uprightGuidance:"今天尝试换个角度看问题。",reversedGuidance:"今天不要做无谓的牺牲。" },
+    {id:13,name:"死神",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_13.jpg",keywords:["结束","转变","重生"],meanings:{love:{upright:"感情中某些事情必须结束。",reversed:"感情中抗拒结束。"},career:{upright:"旧的项目即将结束。",reversed:"工作中抗拒改变。"},wealth:{upright:"某些投资需要结束。",reversed:"理财上不愿改变。"} },uprightGuidance:"今天是放下的好时机。",reversedGuidance:"今天审视那些该放手的事物。" },
+    {id:14,name:"节制",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_14.jpg",keywords:["平衡","耐心","和谐"],meanings:{love:{upright:"感情需要平衡和调和。",reversed:"感情中可能失衡。"},career:{upright:"事业上平衡工作与生活重要。",reversed:"工作中可能过度投入或懈怠。"},wealth:{upright:"财务上平衡收支很重要。",reversed:"理财上可能过度节俭或挥霍。"} },uprightGuidance:"今天追求平衡和和谐。",reversedGuidance:"今天检视生活中的失衡。" },
+    {id:15,name:"恶魔",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_15.jpg",keywords:["束缚","欲望","物质"],meanings:{love:{upright:"感情中可能存在不健康的依赖。",reversed:"感情中正在摆脱束缚。"},career:{upright:"事业上可能被欲望所困。",reversed:"工作中正在找回自主权。"},wealth:{upright:"财务上可能过度追求物质。",reversed:"理财上正在摆脱不良习惯。"} },upightGuidance:"今天审视那些限制你的事物。",reversedGuidance:"今天你正在走向自由。" },
+    {id:16,name:"高塔",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_16.jpg",keywords:["突变","觉醒","毁灭"],meanings:{love:{upright:"感情可能经历突然的变化。",reversed:"感情中正在经历缓慢转变。"},career:{upright:"事业上可能有突发变动。",reversed:"工作中变化正在缓慢发生。"},wealth:{upright:"财务上可能有突发损失。",reversed:"理财上正在经历缓慢调整。"} },uprightGuidance:"今天保持开放心态面对变化。",reversedGuidance:"今天不要抗拒变化。" },
+    {id:17,name:"星星",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_17.jpg",keywords:["希望","灵感","治愈"],meanings:{love:{upright:"感情充满希望和治愈。",reversed:"感情中可能失去希望。"},career:{upright:"事业上希望和灵感涌现。",reversed:"工作中可能感到灵感枯竭。"},wealth:{upright:"财运充满希望！",reversed:"财务上可能暂时困难。"} },uprightGuidance:"今天是充满希望的日子！",reversedGuidance:"今天重新点燃内心的希望。" },
+    {id:18,name:"月亮",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_18.jpg",keywords:["幻觉","恐惧","潜意识"],meanings:{love:{upright:"感情中存在不确定性。",reversed:"感情中的困惑正在消散。"},career:{upright:"事业上某些事情不太明朗。",reversed:"工作中的迷雾正在散去。"},wealth:{upright:"财务上信息可能不完整。",reversed:"理财上的困惑正在消除。"} },uprightGuidance:"今天信任你的直觉。",reversedGuidance:"今天你正在走出迷茫。" },
+    {id:19,name:"太阳",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_19.jpg",keywords:["喜悦","成功","活力"],meanings:{love:{upright:"感情充满阳光和喜悦！",reversed:"感情中虽然有些阴霾。"},career:{upright:"事业取得巨大成功！",reversed:"工作中可能有些小挫折。"},wealth:{upright:"财运极佳！",reversed:"财务上有些小问题。"} },uprightGuidance:"今天充满阳光和喜悦！",reversedGuidance:"今天保持积极乐观。" },
+    {id:20,name:"审判",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_20.jpg",keywords:["觉醒","重生","召唤"],meanings:{love:{upright:"感情上觉醒的时刻。",reversed:"感情中可能忽视召唤。"},career:{upright:"事业上收到重要的召唤。",reversed:"工作中可能过度自我批判。"},wealth:{upright:"财务上需要做出重大决定。",reversed:"理财上不要苛责自己。"} },uprightGuidance:"今天倾听内心的召唤！",reversedGuidance:"今天给自己一个重新开始的机会。" },
+    {id:21,name:"世界",image:"https://raw.githubusercontent.com/lostzzz/tarot-divination/gh-pages/images/card_21.jpg",keywords:["完成","圆满","成就"],meanings:{love:{upright:"感情达到圆满阶段。",reversed:"感情中可能有些事情尚未完成。"},career:{upright:"事业取得重大成就！",reversed:"工作中可能还有未完成的任务。"},wealth:{upright:"财务目标达成！",reversed:"理财上可能还有未完成的计划。"} },uprightGuidance:"今天庆祝成就！",reversedGuidance:"今天审视那些未完成的事情。" }
+];
+
+const BLESSINGS = [
+    "愿你的愿望如星光璀璨，照亮前行的道路。无论前方有多少困难，请相信，宇宙的力量正在为你而运作。",
+    "在这个神秘的时刻，我为你送上最真诚的祝福。愿你心中的愿望像种子一样，在时光的浇灌下生根发芽，最终绽放最美的花朵。",
+    "命运之轮正在为你转动，好运即将降临。请保持信念，继续前行，你的愿望终将实现。",
+    "星星的光芒照亮你的未来，愿你许下的愿望如太阳般温暖，如月亮般温柔，如星辰般永恒。",
+    "宇宙听到了你的心声，正在为你编织美好的未来。愿你保持开放的心态，接收这份来自星空的祝福。",
+    "在这神秘的时刻，愿你的愿望被宇宙之力聆听并回应。相信自己的力量相信奇迹的发生。"
+];
+
+let selectedTopic = null;
+let currentNickname = null;
+let currentCard = null;
+let isReversed = false;
+
+// 保存记录到本地存储
+function saveRecord(nickname, topic, cardName, orientation, wish) {
+    const record = {
+        nickname,
+        topic,
+        cardName,
+        orientation,
+        wish,
+        time: new Date().toLocaleString('zh-CN'),
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    // 保存到 Firebase
+    database.ref('records').push(record).then(() => {
+        console.log('已保存到云端');
+    }).catch(err => {
+        console.error('保存失败:', err);
+    });
+    
+    // 同时保存到 localStorage（备用）
+    const records = JSON.parse(localStorage.getItem('tarot_records') || '[]');
+    records.unshift(record);
+    localStorage.setItem('tarot_records', JSON.stringify(records));
+}
+
+
+function showSection(name) {
+    ['name', 'topic', 'draw', 'result', 'blessing'].forEach(s => {
+        document.getElementById(s + '-section').classList.toggle('active', s === name);
+    });
+}
+
+// 昵称输入
+const nicknameInput = document.getElementById('nickname-input');
+const startBtn = document.getElementById('start-btn');
+
+nicknameInput.addEventListener('input', () => {
+    startBtn.disabled = nicknameInput.value.trim() === '';
+});
+
+startBtn.addEventListener('click', () => {
+    currentNickname = nicknameInput.value.trim();
+    document.getElementById('display-name').textContent = currentNickname;
+    showSection('topic');
+});
+
+// 主题选择
+document.querySelectorAll('.topic-card').forEach(card => {
+    card.addEventListener('click', () => {
+        selectedTopic = card.dataset.topic;
+        showSection('draw');
+    });
+});
+
+// 抽牌
+document.getElementById('draw-card').addEventListener('click', () => {
+    currentCard = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+    isReversed = Math.random() > 0.5;
+    
+    const img = document.getElementById('tarot-image');
+    const loading = document.getElementById('card-loading');
+    
+    // 显示加载状态
+    img.style.display = 'none';
+    loading.style.display = 'flex';
+    loading.textContent = '加载中...';
+    
+    img.onload = function() {
+        img.style.display = 'block';
+        loading.style.display = 'none';
+    };
+    
+    img.onerror = function() {
+        loading.textContent = '使用备用图片';
+        this.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="320" viewBox="0 0 200 320"><rect fill="#1a1a24" width="200" height="320"/><rect x="10" y="10" width="180" height="300" fill="none" stroke="#c9a227" stroke-width="2"/><text x="100" y="140" fill="#c9a227" font-size="60" text-anchor="middle">☽</text><text x="100" y="200" fill="#c9a227" font-size="24" text-anchor="middle">' + currentCard.name + '</text></svg>');
+        this.onload = function() {
+            img.style.display = 'block';
+            loading.style.display = 'none';
+        };
+    };
+    
+    img.src = currentCard.image;
+    img.style.transform = isReversed ? 'rotate(180deg)' : 'none';
+    
+    document.getElementById('card-name').textContent = currentCard.name;
+    const orientEl = document.getElementById('card-orientation');
+    orientEl.textContent = isReversed ? '逆位' : '正位';
+    orientEl.className = 'card-orientation' + (isReversed ? ' reversed' : '');
+    
+    document.getElementById('keywords').innerHTML = currentCard.keywords.map(k => `<span>${k}</span>`).join('');
+    
+    const meaning = currentCard.meanings[selectedTopic];
+    document.getElementById('meaning').textContent = isReversed ? meaning.reversed : meaning.upright;
+    document.getElementById('guidance').textContent = isReversed ? currentCard.reversedGuidance : currentCard.uprightGuidance;
+    
+    showSection('result');
+});
+
+// 许愿
+document.getElementById('wish-btn').addEventListener('click', () => {
+    const wish = document.getElementById('wish-input').value.trim() || '愿世界和平';
+    
+    // 保存记录
+    saveRecord(currentNickname, selectedTopic, currentCard.name, isReversed ? '逆位' : '正位', wish);
+    
+    // 显示祝福
+    document.getElementById('wish-display').textContent = wish;
+    const blessing = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
+    document.getElementById('blessing-text').textContent = blessing;
+    
+    showSection('blessing');
+});
+
+// 返回首页
+document.getElementById('home-btn').addEventListener('click', () => {
+    nicknameInput.value = '';
+    startBtn.disabled = true;
+    document.getElementById('wish-input').value = '';
+    showSection('name');
+});
+
+showSection('name');
+    </script>
+</body>
+</html><!-- Version: 1.0.0 - 2026-03-20 14:33:16 -->
